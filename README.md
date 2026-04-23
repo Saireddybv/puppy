@@ -75,13 +75,5 @@ A: Yes, both must be on the same network.
 - Both devices on same WiFi
 - Phone browser (no app needed)
 
-## 🚀 Advanced Features (Future)
-
-Want me to add:
-- ✅ History of last 10 items?
-- ✅ Server auto-restarts?
-- ✅ Dark mode?
-- ✅ File sharing?
-
 ## 📝 License
 Free to use, modify, share!
