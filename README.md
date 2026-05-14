@@ -1,79 +1,162 @@
-# 📋 Clipboard Sync — Windows to iPhone/Android
+# � Puppy — Wireless Clipboard Sync
 
-Copy anything on your Windows laptop and paste it on your phone via a local web server. No cloud, no apps needed.
+Transfer text between your Windows PC and iPhone/Android **instantly** without cloud storage, apps, or complicated setup. Just copy on your PC, paste on your phone over WiFi.
 
-## ⚡ Quick Start (2 minutes)
+## ✨ Features
 
-### Option 1: Automatic (Easiest)
-1. Double-click **`run.bat`** 
-2. It will show your PC's IP address
-3. Open that URL on your phone browser
-4. Done!
+- **📋 Clipboard Sync** — Copy on Windows (Ctrl+C) → Paste on iPhone/Android
+- **⌨️ Live Typing Capture** — See everything you type on your PC appear on your phone in real-time
+- **🔒 Local WiFi Only** — No cloud, no data tracking, 100% private
+- **📱 Zero Apps Needed** — Works in any phone browser (Safari, Chrome)
+- **⚡ No Setup Hassle** — Just run `run.bat` and open a URL
+- **🎨 Split Panel UI** — Separate panels for clipboard and live typing
 
-### Option 2: Manual Steps
+## 🚀 Quick Start (30 seconds)
 
-**Step 1: Install Dependencies**
+### Windows
+1. Install Python (if not already installed)
+2. Double-click **`run.bat`**
+3. You'll see: `Server running at http://192.168.X.X:5055`
+
+### iPhone/Android
+1. Make sure your phone is on **same WiFi** as your PC
+2. Open Safari (iPhone) or Chrome (Android)
+3. Go to: `http://192.168.X.X:5055` (replace with your PC's IP)
+4. Bookmark for quick access!
+
+## 📖 How to Use
+
+### Mode 1: Clipboard Sync (Left Panel)
 ```
-pip install flask pyperclip
+1. Copy anything on your PC (Ctrl+C)
+   → Email, Teams chat, code, URLs, anything works
+2. Tap "⬇️ Get from PC" on your phone
+3. Text appears instantly
+4. Tap "📲 Copy" to add to phone clipboard
+5. Paste normally (long-press → Paste)
 ```
 
-**Step 2: Find Your PC's IP Address**
-Open PowerShell and run:
+### Mode 2: Live Typing (Right Panel)
 ```
-ipconfig
+1. Tap "Live ON" button on your phone
+2. Start typing ANYWHERE on your PC
+   → Notepad, VS Code, Slack, email — it captures everything
+3. Your text appears live on the phone screen
+4. Tap "Copy" to copy what you typed
+5. Tap "Clear" to reset
 ```
-Find **IPv4 Address** (usually looks like `192.168.1.42`)
 
-**Step 3: Start the Server**
+## 🛠️ Installation
+
+### Method 1: Automatic (Windows)
+```bash
+run.bat
 ```
+
+### Method 2: Manual
+```bash
+# Install dependencies
+python -m pip install -r requirements.txt
+
+# Start server
 python clip_server.py
 ```
 
-**Step 4: Open on Your Phone**
-- Connect phone to same WiFi as your PC
-- Open Safari (iPhone) or Chrome (Android)
-- Go to: `http://YOUR.PC.IP.ADDRESS:5055`
+### Find Your PC's IP Address
+Open PowerShell and run:
+```bash
+ipconfig
+```
+Look for **IPv4 Address** (e.g., `192.168.1.42`)
 
-## 📱 How to Use
+## 🔧 System Requirements
 
-### Copy from Windows → Paste on iPhone
-1. Copy anything on your PC (Ctrl+C)
-   - Teams chat, email, browser, Word, Notepad — anything works
-2. Open phone browser (bookmark it for speed)
-3. Tap **"⬇️ Get from PC"** → content appears
-4. Tap **"📲 Copy to Phone"** → added to phone clipboard
-5. Paste anywhere normally (long press → Paste)
-
-### Pro Tips
-- **Bookmark on home screen**: Safari → Share → Add to Home Screen
-- **Auto-refresh**: Tap "Get from PC" every time you copy something new
-- **One message at a time**: Windows only stores what you last copied (not the app's limitation)
+- **Windows 10/11** with Python 3.7+
+- **iPhone** (any iOS with Safari) or **Android** (any phone with browser)
+- Both devices on **same WiFi network**
+- Port 5055 available (can be changed in code)
 
 ## ❓ FAQ
 
-**Q: Works from Teams mails emails, etc?**  
-A: Yes! Copy (Ctrl+C) from anywhere on Windows — the server reads your clipboard.
+| Question | Answer |
+|----------|--------|
+| **Will it work from Teams/Gmail/Chrome?** | Yes! Ctrl+C from anywhere works |
+| **Is it fast?** | Instant — no lag |
+| **What about security?** | Local WiFi only, nothing stored, nothing sent to cloud |
+| **Can multiple people use it?** | Yes, same network, any number of phones |
+| **Does it work over internet?** | No, WiFi only (intentional for privacy) |
+| **Can I transfer files?** | Currently text only; file sharing coming soon |
 
-**Q: Is it instant?**  
-A: Yes — no delay. You just need to tap the button on your phone.
+## 🐛 Troubleshooting
 
-**Q: Can I copy multiple messages?**  
-A: One at a time (Windows limitation). Copy #1 → fetch → copy #2 → fetch.
+**"Cannot connect to server"**
+- ✅ Both devices on same WiFi?
+- ✅ Using correct IP? (Run `ipconfig` on PC)
+- ✅ Did you include `:5055` at the end?
 
-**Q: It won't connect?**  
-A: 
-1. Both devices on same WiFi? ✅
-2. Correct IP address? (run `ipconfig` again)
-3. Allow Python through Windows Firewall if prompted
-4. Try restarting the server
+**"Windows Firewall is blocking"**
+- Allow `python.exe` through Windows Defender Firewall
 
-**Q: Only works on WiFi?**  
-A: Yes, both must be on the same network.
+**"Server won't start"**
+- Make sure port 5055 is free (no other app using it)
+- Try: `netstat -ano | findstr :5055`
 
-## 🔧 Requirements
-- Python 3.6+ (check: `python --version`)
-- Both devices on same WiFi
-- Phone browser (no app needed)
+**"Live typing not working"**
+- Make sure you clicked "Live ON" button
+- Try pressing keys in a text app (Notepad, browser)
 
-## 📝 License
-Free to use, modify, share!
+## 🏗️ Project Structure
+
+```
+puppy/
+├── clip_server.py          # Main Flask + WebSocket server
+├── requirements.txt        # Python dependencies
+├── run.bat                 # Windows quick-start launcher
+├── README.md              # This file
+└── .gitignore            # Git ignore rules
+```
+
+## 📦 Dependencies
+
+- **Flask** — Web server
+- **flask-socketio** — WebSocket for real-time updates
+- **pyperclip** — Read Windows clipboard
+- **pynput** — Capture keyboard input
+
+## 🎯 How It Works Under the Hood
+
+1. **Clipboard Sync**: `pyperclip` reads your Windows clipboard when you tap "Get from PC"
+2. **Live Typing**: `pynput.Listener` captures all keystrokes and sends via WebSocket
+3. **WebSocket**: Maintains real-time connection between PC and phone
+4. **Web UI**: React-free vanilla JavaScript for instant updates
+
+## 🔮 Planned Features
+
+- [ ] Clipboard history (last 20 items)
+- [ ] Auto-sync mode (sync every 5 seconds)
+- [ ] Dark mode
+- [ ] File transfer
+- [ ] Voice input
+- [ ] Sync between multiple phones
+
+## 🤝 Contributing
+
+Found a bug? Have an idea? **Pull requests welcome!**
+
+1. Fork the repo
+2. Create a branch: `git checkout -b feature/your-feature`
+3. Commit: `git commit -am 'Add feature'`
+4. Push: `git push origin feature/your-feature`
+5. Open a Pull Request
+
+## 📄 License
+
+MIT License — Use, modify, and share freely!
+
+## 🙋 Support
+
+**Having issues?** Check the [Troubleshooting](#-troubleshooting) section or open an issue.
+
+---
+
+**Made with ❤️ for seamless PC-to-Phone text transfer**
