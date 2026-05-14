@@ -21,33 +21,49 @@ HTML = """
   <title>Clipboard Sync</title>
   <style>
     body { font-family: sans-serif; padding: 10px; margin: 0; background: #f5f5f5; height: 100vh; display: flex; }
-    .container { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex: 1; display: flex; flex-direction: column; }
+    .main-container { display: flex; gap: 10px; width: 100%; }
+    .panel { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex: 1; display: flex; flex-direction: column; }
     .buttons-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-    button { padding: 8px 14px; font-size: 13px; cursor: pointer; border: none; border-radius: 5px; background: #007AFF; color: white; font-weight: bold; flex: 1; min-width: 120px; }
+    button { padding: 8px 12px; font-size: 12px; cursor: pointer; border: none; border-radius: 5px; background: #007AFF; color: white; font-weight: bold; flex: 1; min-width: 70px; white-space: nowrap; }
     button:active { background: #0051D5; }
     .toggle-btn { background: #666; }
     .toggle-btn.active { background: #34C759; }
-    textarea { width: 100%; flex: 1; font-size: 16px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; resize: none; }
-    #status { color: green; margin-top: 8px; font-weight: bold; font-size: 14px; }
+    textarea { width: 100%; flex: 1; font-size: 16px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; resize: none; font-family: monospace; }
+    .status { color: green; margin-top: 8px; font-weight: bold; font-size: 12px; }
     .error { color: red !important; }
     .warning { color: orange !important; }
-    h2 { color: #333; margin: 0 0 5px 0; font-size: 18px; }
-    p { color: #666; margin: 0 0 10px 0; font-size: 12px; }
+    .success { color: green !important; }
+    h3 { color: #333; margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #007AFF; padding-bottom: 8px; }
     .mode-label { font-size: 11px; color: #999; margin-top: 5px; }
+    .panel-divider { width: 1px; background: #ddd; }
+    @media (max-width: 768px) { .main-container { flex-direction: column; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>📋 Clipboard Sync</h2>
-    <p>Copy on Windows → Fetch on iPhone/Android | Live Type Anywhere</p>
-    <div class="buttons-row">
-      <button onclick="fetchClip()">⬇️ Get from PC</button>
-      <button onclick="copyToPhone()">📲 Copy to Android</button>
-      <button class="toggle-btn" id="toggleBtn" onclick="toggleLiveCapture()">⌨️ Live OFF</button>
+  <div class="main-container">
+    <!-- Left Panel: Clipboard -->
+    <div class="panel">
+      <h3>📋 Clipboard from PC</h3>
+      <div class="buttons-row">
+        <button onclick="fetchClip()">⬇️ Get from PC</button>
+        <button onclick="copyToPhone()">📲 Copy</button>
+      </div>
+      <textarea id="clipboardBox" placeholder="Click 'Get from PC' to fetch clipboard content..."></textarea>
+      <div id="clipStatus" class="status"></div>
     </div>
-    <textarea id="box" placeholder="Clipboard content appears here... or live typing will appear here when enabled"></textarea>
-    <div id="status"></div>
-    <div class="mode-label" id="modeLabel"></div>
+
+    <!-- Right Panel: Live Typing -->
+    <div class="panel">
+      <h3>⌨️ Live Typing</h3>
+      <div class="buttons-row">
+        <button class="toggle-btn" id="toggleBtn" onclick="toggleLiveCapture()">Live ON</button>
+        <button onclick="clearLiveBox()">Clear</button>
+        <button onclick="copyLiveBox()">Copy</button>
+      </div>
+      <textarea id="liveBox" placeholder="Enable 'Live' to capture all typing from your PC..."></textarea>
+      <div id="liveStatus" class="status"></div>
+      <div class="mode-label" id="modeLabel"></div>
+    </div>
   </div>
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -61,63 +77,124 @@ HTML = """
         console.log('Connected to server');
       });
       socket.on('keystroke', (data) => {
-        document.getElementById('box').value += data.key;
-        const textarea = document.getElementById('box');
-        textarea.scrollTop = textarea.scrollHeight;
+        const liveBox = document.getElementById('liveBox');
+        if (data.key === '\b') {
+          // Handle backspace - remove last character
+          liveBox.value = liveBox.value.slice(0, -1);
+        } else {
+          liveBox.value += data.key;
+        }
+        liveBox.scrollTop = liveBox.scrollHeight;
       });
       socket.on('live_status', (data) => {
-        document.getElementById('modeLabel').innerText = '🔴 Live: ' + data.status;
+        document.getElementById('modeLabel').innerText = '🔴 Status: ' + data.status;
       });
     }
 
     function fetchClip() {
-      document.getElementById('status').innerText = '⏳ Fetching...';
+      document.getElementById('clipStatus').innerText = '⏳ Fetching...';
+      document.getElementById('clipStatus').className = 'status';
       fetch('/get').then(r => r.json()).then(d => {
-        document.getElementById('box').value = d.text;
-        document.getElementById('status').innerText = '✅ Fetched from PC!';
-        document.getElementById('modeLabel').innerText = '';
+        document.getElementById('clipboardBox').value = d.text;
+        document.getElementById('clipStatus').innerText = '✅ Fetched!';
+        document.getElementById('clipStatus').className = 'status success';
       }).catch(e => {
-        document.getElementById('status').innerText = '❌ Connection error';
-        document.getElementById('status').classList.add('error');
+        document.getElementById('clipStatus').innerText = '❌ Connection error';
+        document.getElementById('clipStatus').className = 'status error';
       });
     }
 
     function copyToPhone() {
-      const text = document.getElementById('box').value;
+      const text = document.getElementById('clipboardBox').value;
       if (!text) {
-        document.getElementById('status').innerText = '❌ No text to copy';
-        document.getElementById('status').classList.add('error');
+        document.getElementById('clipStatus').innerText = '❌ No text to copy';
+        document.getElementById('clipStatus').className = 'status error';
         return;
       }
-      navigator.clipboard.writeText(text).then(() => {
-        document.getElementById('status').innerText = '✅ Copied to phone clipboard!';
-        document.getElementById('status').classList.remove('error');
-      }).catch(() => {
-        document.getElementById('status').innerText = '❌ Copy failed - use manual select & copy';
-        document.getElementById('status').classList.add('error');
-      });
+
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          document.getElementById('clipStatus').innerText = '✅ Copied to phone!';
+          document.getElementById('clipStatus').className = 'status success';
+        }).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.getElementById('clipboardBox');
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        document.getElementById('clipStatus').innerText = '✅ Copied to phone!';
+        document.getElementById('clipStatus').className = 'status success';
+      } catch (err) {
+        document.getElementById('clipStatus').innerText = '❌ Copy failed';
+        document.getElementById('clipStatus').className = 'status error';
+      }
     }
 
     function toggleLiveCapture() {
       isLiveCapturing = !isLiveCapturing;
       const btn = document.getElementById('toggleBtn');
-      const textarea = document.getElementById('box');
       
       if (isLiveCapturing) {
-        btn.innerText = '⌨️ Live ON';
+        btn.innerText = 'Live OFF';
         btn.classList.add('active');
-        textarea.value = '';
-        textarea.placeholder = '🔴 LIVE: Typing anywhere on PC will appear here...';
-        document.getElementById('status').innerText = '🔴 Live capture ENABLED - type anywhere on your PC!';
-        document.getElementById('status').classList.remove('error');
+        document.getElementById('liveBox').value = '';
+        document.getElementById('liveStatus').innerText = '🔴 Capturing keystrokes...';
+        document.getElementById('liveStatus').className = 'status warning';
         socket.emit('start_capture');
       } else {
-        btn.innerText = '⌨️ Live OFF';
+        btn.innerText = 'Live ON';
         btn.classList.remove('active');
-        textarea.placeholder = 'Clipboard content appears here... or live typing will appear here when enabled';
-        document.getElementById('status').innerText = '⚪ Live capture disabled';
+        document.getElementById('liveStatus').innerText = '⚪ Capture disabled';
+        document.getElementById('liveStatus').className = 'status';
         document.getElementById('modeLabel').innerText = '';
         socket.emit('stop_capture');
+      }
+    }
+
+    function clearLiveBox() {
+      document.getElementById('liveBox').value = '';
+      document.getElementById('liveStatus').innerText = '';
+    }
+
+    function copyLiveBox() {
+      const text = document.getElementById('liveBox').value;
+      if (!text) {
+        document.getElementById('liveStatus').innerText = '❌ No text to copy';
+        document.getElementById('liveStatus').className = 'status error';
+        return;
+      }
+
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          document.getElementById('liveStatus').innerText = '✅ Copied!';
+          document.getElementById('liveStatus').className = 'status success';
+        }).catch(() => {
+          fallbackCopyLive(text);
+        });
+      } else {
+        fallbackCopyLive(text);
+      }
+    }
+
+    function fallbackCopyLive(text) {
+      const textarea = document.getElementById('liveBox');
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        document.getElementById('liveStatus').innerText = '✅ Copied!';
+        document.getElementById('liveStatus').className = 'status success';
+      } catch (err) {
+        document.getElementById('liveStatus').innerText = '❌ Copy failed';
+        document.getElementById('liveStatus').className = 'status error';
       }
     }
 
